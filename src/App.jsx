@@ -25,9 +25,6 @@ export default function App() {
   const ADMIN_PASSWORD = "admin123";
   const STAFF_PASSWORD = "staff123";
 
-  // இந்த நிமிஷத்திற்குப் பிறகு (Current Session) உருவாக்கப்பட்டவை மட்டும் டிராக்கரில் காட்டும் (பழையது வராது)
-  const [sessionStartTime] = useState(new Date());
-
   const staffByCategory = {
     Faculty: ['Prof. Ramesh', 'Dr. Suresh'],
     Canteen: ['Mr. Annadurai (Canteen)', 'Mr. Pitchai'],
@@ -41,20 +38,13 @@ export default function App() {
     const q = query(collection(db, 'feedbacks'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const allData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // இந்த கோடை காப்பி செய்து ரன் செய்த பிறகு சப்மிட் ஆனவை மட்டும் ஃபில்டர் செய்யப்படும்
-      const freshData = allData.filter(f => {
-        if (!f.createdAt) return true; 
-        const feedbackDate = f.createdAt.toDate ? f.createdAt.toDate() : new Date(f.createdAt);
-        return feedbackDate >= sessionStartTime;
-      });
-
-      setFeedbacks(freshData);
+      // டேட்டாபேஸில் உள்ள அனைத்து டேட்டாக்களையும் (அந்த 6 டேட்டாக்கள் + புதியவை) அப்படியே டிராக்கரில் காட்டுவது
+      setFeedbacks(allData);
     }, (error) => {
       console.error("Firestore Error: ", error);
     });
     return () => unsubscribe();
-  }, [sessionStartTime]);
+  }, []);
 
   const theme = {
     bg: isDarkMode ? '#0f172a' : '#f8fafc',
@@ -290,7 +280,7 @@ export default function App() {
 
               <div style={cardStyle}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
-                  <h3 style={{ margin: 0 }}>🔍 My Feedback Tracker (Live Session)</h3>
+                  <h3 style={{ margin: 0 }}>🔍 My Feedback Tracker (All Submissions)</h3>
                   {studentEmail && (
                     <span style={{ background: '#3b82f6', color: '#fff', padding: '6px 14px', borderRadius: '20px', fontSize: '13px', fontWeight: '700' }}>
                       Total Submissions: {feedbacks.filter(f => f.email && f.email.toLowerCase().trim() === studentEmail.toLowerCase().trim()).length}
@@ -299,7 +289,7 @@ export default function App() {
                 </div>
 
                 {feedbacks.length === 0 ? (
-                  <p style={{ color: theme.subText, fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>No active submissions in this session. Submit a feedback above to view it here!</p>
+                  <p style={{ color: theme.subText, fontStyle: 'italic', textAlign: 'center', padding: '20px 0' }}>No submissions found in database.</p>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', marginTop: '15px' }}>
                     <thead>
